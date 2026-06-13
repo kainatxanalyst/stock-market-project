@@ -4,17 +4,8 @@ from pydantic import BaseModel
 import numpy as np
 import joblib
 
-# =========================
-# APP
-# =========================
-app = FastAPI(
-    title="AI Stock Market Prediction API",
-    version="2.0.0"
-)
+app = FastAPI(title="AI Stock Market Prediction API", version="2.0.0")
 
-# =========================
-# CORS (FIXED)
-# =========================
 app.add_middleware(
     CORSMiddleware,
     allow_origins=[
@@ -26,15 +17,9 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-# =========================
-# LOAD MODEL
-# =========================
 model = joblib.load("xgboost_model.pkl")
 scaler = joblib.load("scaler.pkl")
 
-# =========================
-# INPUT MODEL
-# =========================
 class StockInput(BaseModel):
     Open: float
     High: float
@@ -46,16 +31,10 @@ class StockInput(BaseModel):
     Month: int
     Day: int
 
-# =========================
-# HOME
-# =========================
 @app.get("/")
 def home():
     return {"message": "API Running 🚀"}
 
-# =========================
-# PREDICT
-# =========================
 @app.post("/predict")
 def predict(data: StockInput):
 
@@ -77,8 +56,7 @@ def predict(data: StockInput):
 
     confidence = 0.0
     if hasattr(model, "predict_proba"):
-        proba = model.predict_proba(input_scaled)[0]
-        confidence = float(max(proba)) * 100
+        confidence = float(max(model.predict_proba(input_scaled)[0])) * 100
 
     return {
         "prediction": prediction,
@@ -89,9 +67,6 @@ def predict(data: StockInput):
         "version": "2.0.0"
     }
 
-# =========================
-# RUN SERVER (FIXED)
-# =========================
 if __name__ == "__main__":
     import uvicorn
     uvicorn.run(app, host="0.0.0.0", port=10000)

@@ -3,11 +3,12 @@ from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
 import numpy as np
 import joblib
+import os
+import uvicorn
 
 app = FastAPI(title="AI Stock Market Prediction API", version="2.0.0")
 
-from fastapi.middleware.cors import CORSMiddleware
-
+# CORS FIXED
 app.add_middleware(
     CORSMiddleware,
     allow_origins=[
@@ -18,8 +19,11 @@ app.add_middleware(
     allow_methods=["*"],
     allow_headers=["*"],
 )
-model = joblib.load("xgboost_model.pkl")
-scaler = joblib.load("scaler.pkl")
+
+# LOAD MODEL (ONLY ONCE)
+BASE_DIR = os.path.dirname(__file__)
+model = joblib.load(os.path.join(BASE_DIR, "xgboost_model.pkl"))
+scaler = joblib.load(os.path.join(BASE_DIR, "scaler.pkl"))
 
 class StockInput(BaseModel):
     Open: float
@@ -67,17 +71,6 @@ def predict(data: StockInput):
         "model": "XGBoost",
         "version": "2.0.0"
     }
-import os
-import joblib
-
-model_path = os.path.join(os.path.dirname(__file__), "xgboost_model.pkl")
-scaler_path = os.path.join(os.path.dirname(__file__), "scaler.pkl")
-
-model = joblib.load(model_path)
-scaler = joblib.load(scaler_path)
-
-import os
-import uvicorn
 
 if __name__ == "__main__":
     port = int(os.environ.get("PORT", 8000))

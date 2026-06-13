@@ -7,16 +7,14 @@ import joblib
 # =========================
 # APP
 # =========================
-
 app = FastAPI(
     title="AI Stock Market Prediction API",
     version="2.0.0"
 )
 
 # =========================
-# CORS
+# CORS (FIXED)
 # =========================
-
 app.add_middleware(
     CORSMiddleware,
     allow_origins=[
@@ -31,14 +29,12 @@ app.add_middleware(
 # =========================
 # LOAD MODEL
 # =========================
-
 model = joblib.load("xgboost_model.pkl")
 scaler = joblib.load("scaler.pkl")
 
 # =========================
 # INPUT MODEL
 # =========================
-
 class StockInput(BaseModel):
     Open: float
     High: float
@@ -53,7 +49,6 @@ class StockInput(BaseModel):
 # =========================
 # HOME
 # =========================
-
 @app.get("/")
 def home():
     return {"message": "API Running 🚀"}
@@ -61,7 +56,6 @@ def home():
 # =========================
 # PREDICT
 # =========================
-
 @app.post("/predict")
 def predict(data: StockInput):
 
@@ -96,9 +90,8 @@ def predict(data: StockInput):
     }
 
 # =========================
-# RUN SERVER
+# RUN SERVER (FIXED)
 # =========================
-
 if __name__ == "__main__":
     import uvicorn
     uvicorn.run(app, host="0.0.0.0", port=10000)

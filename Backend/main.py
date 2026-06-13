@@ -59,7 +59,6 @@ def predict(data: StockInput):
 
     input_scaled = scaler.transform(input_data)
 
-    # 🔥 FIXED LOGIC (IMPORTANT)
     proba = model.predict_proba(input_scaled)[0][1]
 
     prediction = 1 if proba > 0.5 else 0

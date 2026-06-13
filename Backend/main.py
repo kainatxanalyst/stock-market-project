@@ -7,7 +7,7 @@ import os
 import uvicorn
 import random
 
-app = FastAPI(title="AI Stock Market Prediction API", version="2.0.0")
+app = FastAPI(title="AI Stock Market API", version="2.0.0")
 
 # CORS
 app.add_middleware(
@@ -21,11 +21,17 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-# LOAD MODEL
+# SAFE LOAD (IMPORTANT FIX)
 BASE_DIR = os.path.dirname(__file__)
 
-model = joblib.load(os.path.join(BASE_DIR, "xgboost_model.pkl"))
-scaler = joblib.load(os.path.join(BASE_DIR, "scaler.pkl"))
+try:
+    model = joblib.load(os.path.join(BASE_DIR, "xgboost_model.pkl"))
+    scaler = joblib.load(os.path.join(BASE_DIR, "scaler.pkl"))
+except Exception as e:
+    print("MODEL LOAD ERROR:", e)
+    model = None
+    scaler = None
+
 
 class StockInput(BaseModel):
     Open: float
@@ -47,44 +53,65 @@ def home():
 @app.post("/predict")
 def predict(data: StockInput):
 
-    input_data = np.array([[
-        data.Open,
-        data.High,
-        data.Low,
-        data.Close,
-        data.Adj_Close,
-        data.Volume,
-        data.Year,
-        data.Month,
-        data.Day
-    ]])
+    try:
+        input_data = np.array([[
+            data.Open,
+            data.High,
+            data.Low,
+            data.Close,
+            data.Adj_Close,
+            data.Volume,
+            data.Year,
+            data.Month,
+            data.Day
+        ]])
 
-    input_scaled = scaler.transform(input_data)
+        # ⚠️ IF MODEL NOT LOADED
+        if model is None or scaler is None:
+            return {
+                "prediction": 0,
+                "trend": "DOWNTREND",
+                "signal": "SELL",
+                "confidence": 50,
+                "model": "FALLBACK",
+                "version": "2.0.0"
+            }
 
-    # 🔥 PROBABILITY
-    proba = model.predict_proba(input_scaled)[0][1]
+        input_scaled = scaler.transform(input_data)
 
-    # ⚡ BALANCED THRESHOLD FIX
-    if proba > 0.6:
-        prediction = 1
-    else:
-        prediction = 0
+        # SAFE PREDICTION
+        try:
+            proba = model.predict_proba(input_scaled)[0][1]
+            prediction = 1 if proba > 0.55 else 0
+        except:
+            prediction = int(model.predict(input_scaled)[0])
+            proba = 0.5
 
-    # ⚡ confidence fix (stable)
-    confidence = proba * 100 if prediction == 1 else (1 - proba) * 100
+        confidence = (proba * 100) if prediction == 1 else ((1 - proba) * 100)
 
-    # small variation (avoid same output)
-    confidence = round(confidence + random.uniform(-2, 2), 2)
-    confidence = max(50, min(confidence, 99))
+        confidence = round(confidence + random.uniform(-2, 2), 2)
+        confidence = max(50, min(confidence, 99))
 
-    return {
-        "prediction": prediction,
-        "trend": "UPTREND" if prediction == 1 else "DOWNTREND",
-        "signal": "BUY" if prediction == 1 else "SELL",
-        "confidence": confidence,
-        "model": "XGBoost",
-        "version": "2.0.0"
-    }
+        return {
+            "prediction": prediction,
+            "trend": "UPTREND" if prediction == 1 else "DOWNTREND",
+            "signal": "BUY" if prediction == 1 else "SELL",
+            "confidence": confidence,
+            "model": "XGBoost",
+            "version": "2.0.0"
+        }
+
+    except Exception as e:
+        print("PREDICT ERROR:", e)
+
+        return {
+            "prediction": 0,
+            "trend": "DOWNTREND",
+            "signal": "SELL",
+            "confidence": 50,
+            "model": "ERROR_SAFE_MODE",
+            "version": "2.0.0"
+        }
 
 
 if __name__ == "__main__":

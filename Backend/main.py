@@ -8,7 +8,7 @@ import uvicorn
 
 app = FastAPI(title="AI Stock Market Prediction API", version="2.0.0")
 
-# CORS FIXED
+# CORS
 app.add_middleware(
     CORSMiddleware,
     allow_origins=[
@@ -20,10 +20,22 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-# LOAD MODEL
+# SAFE MODEL LOADING
 BASE_DIR = os.path.dirname(__file__)
-model = joblib.load(os.path.join(BASE_DIR, "xgboost_model.pkl"))
-scaler = joblib.load(os.path.join(BASE_DIR, "scaler.pkl"))
+
+model_path = os.path.join(BASE_DIR, "xgboost_model.pkl")
+scaler_path = os.path.join(BASE_DIR, "scaler.pkl")
+
+model = None
+scaler = None
+
+try:
+    model = joblib.load(model_path)
+    scaler = joblib.load(scaler_path)
+    print("✅ Model & Scaler loaded successfully")
+except Exception as e:
+    print("❌ Model load error:", e)
+
 
 class StockInput(BaseModel):
     Open: float
@@ -45,34 +57,61 @@ def home():
 @app.post("/predict")
 def predict(data: StockInput):
 
-    input_data = np.array([[
-        data.Open,
-        data.High,
-        data.Low,
-        data.Close,
-        data.Adj_Close,
-        data.Volume,
-        data.Year,
-        data.Month,
-        data.Day
-    ]])
+    try:
+        input_data = np.array([[
+            data.Open,
+            data.High,
+            data.Low,
+            data.Close,
+            data.Adj_Close,
+            data.Volume,
+            data.Year,
+            data.Month,
+            data.Day
+        ]])
 
-    input_scaled = scaler.transform(input_data)
+        # if model missing → fallback
+        if model is None or scaler is None:
+            return {
+                "prediction": 0,
+                "trend": "DOWNTREND",
+                "signal": "SELL",
+                "confidence": 50,
+                "model": "FALLBACK",
+                "version": "2.0.0"
+            }
 
-    proba = model.predict_proba(input_scaled)[0][1]
+        input_scaled = scaler.transform(input_data)
 
-    prediction = 1 if proba > 0.5 else 0
+        prediction = int(model.predict(input_scaled)[0])
 
-    confidence = proba * 100 if prediction == 1 else (1 - proba) * 100
+        confidence = 50
+        try:
+            if hasattr(model, "predict_proba"):
+                confidence = float(max(model.predict_proba(input_scaled)[0])) * 100
+        except:
+            confidence = 50
 
-    return {
-        "prediction": prediction,
-        "trend": "UPTREND" if prediction == 1 else "DOWNTREND",
-        "signal": "BUY" if prediction == 1 else "SELL",
-        "confidence": round(confidence, 2),
-        "model": "XGBoost",
-        "version": "2.0.0"
-    }
+        return {
+            "prediction": prediction,
+            "trend": "UPTREND" if prediction == 1 else "DOWNTREND",
+            "signal": "BUY" if prediction == 1 else "SELL",
+            "confidence": round(confidence, 2),
+            "model": "XGBoost",
+            "version": "2.0.0"
+        }
+
+    except Exception as e:
+        print("❌ Predict error:", e)
+
+        return {
+            "prediction": 0,
+            "trend": "DOWNTREND",
+            "signal": "SELL",
+            "confidence": 50,
+            "model": "ERROR_FALLBACK",
+            "version": "2.0.0"
+        }
 
 
 if __name__ == "__main__":

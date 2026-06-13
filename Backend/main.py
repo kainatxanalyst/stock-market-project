@@ -67,6 +67,9 @@ def predict(data: StockInput):
         "version": "2.0.0"
     }
 
+import os
+import uvicorn
+
 if __name__ == "__main__":
-    import uvicorn
-    uvicorn.run(app, host="0.0.0.0", port=10000)
+    port = int(os.environ.get("PORT", 10000))
+    uvicorn.run(app, host="0.0.0.0", port=port)

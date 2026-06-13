@@ -20,7 +20,7 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-# LOAD MODEL (ONLY ONCE)
+# LOAD MODEL
 BASE_DIR = os.path.dirname(__file__)
 model = joblib.load(os.path.join(BASE_DIR, "xgboost_model.pkl"))
 scaler = joblib.load(os.path.join(BASE_DIR, "scaler.pkl"))
@@ -36,9 +36,11 @@ class StockInput(BaseModel):
     Month: int
     Day: int
 
+
 @app.get("/")
 def home():
     return {"message": "API Running 🚀"}
+
 
 @app.post("/predict")
 def predict(data: StockInput):
@@ -57,11 +59,12 @@ def predict(data: StockInput):
 
     input_scaled = scaler.transform(input_data)
 
-    prediction = int(model.predict(input_scaled)[0])
+    # 🔥 FIXED LOGIC (IMPORTANT)
+    proba = model.predict_proba(input_scaled)[0][1]
 
-    confidence = 0.0
-    if hasattr(model, "predict_proba"):
-        confidence = float(max(model.predict_proba(input_scaled)[0])) * 100
+    prediction = 1 if proba > 0.5 else 0
+
+    confidence = proba * 100 if prediction == 1 else (1 - proba) * 100
 
     return {
         "prediction": prediction,
@@ -71,6 +74,7 @@ def predict(data: StockInput):
         "model": "XGBoost",
         "version": "2.0.0"
     }
+
 
 if __name__ == "__main__":
     port = int(os.environ.get("PORT", 8000))

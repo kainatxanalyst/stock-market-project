@@ -3,7 +3,7 @@ import axios from "axios";
 export const predictStock = async (data) => {
   try {
     const response = await axios.post(
-      "http://127.0.0.1:8000/predict",
+      "https://stock-market-project-3.onrender.com/predict",
       data
     );
 

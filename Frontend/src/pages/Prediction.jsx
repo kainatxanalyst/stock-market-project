@@ -32,7 +32,7 @@ export default function Prediction() {
     setResult(null);
 
     try {
-      const res = await axios.post("http://127.0.0.1:8000/predict", {
+      const res = await axios.post("https://stock-market-project-3.onrender.com/predict", {
         Open: Number(form.Open),
         High: Number(form.High),
         Low: Number(form.Low),

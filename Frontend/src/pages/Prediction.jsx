@@ -32,17 +32,20 @@ export default function Prediction() {
     setResult(null);
 
     try {
-      const res = await axios.post("https://stock-market-project-3.onrender.com/predict", {
-        Open: Number(form.Open),
-        High: Number(form.High),
-        Low: Number(form.Low),
-        Close: Number(form.Close),
-        Adj_Close: Number(form.Adj_Close),
-        Volume: Number(form.Volume),
-        Year: Number(form.Year),
-        Month: Number(form.Month),
-        Day: Number(form.Day),
-      });
+      const res = await axios.post(
+  "https://stock-market-project-3.onrender.com/predict",
+  {
+    Open: Number(form.Open),
+    High: Number(form.High),
+    Low: Number(form.Low),
+    Close: Number(form.Close),
+    Adj_Close: Number(form.Adj_Close),
+    Volume: Number(form.Volume),
+    Year: Number(form.Year),
+    Month: Number(form.Month),
+    Day: Number(form.Day),
+  }
+);
 
       setResult(res.data);
     } catch (err) {

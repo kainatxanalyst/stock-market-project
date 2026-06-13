@@ -11,14 +11,13 @@ from fastapi.middleware.cors import CORSMiddleware
 app.add_middleware(
     CORSMiddleware,
     allow_origins=[
-        "https://stock-predict-app.onrender.com",
-        "http://localhost:5173"
+        "http://localhost:5173",
+        "https://stock-predict-app.onrender.com"
     ],
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
 )
-
 model = joblib.load("xgboost_model.pkl")
 scaler = joblib.load("scaler.pkl")
 

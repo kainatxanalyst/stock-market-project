@@ -66,6 +66,14 @@ def predict(data: StockInput):
         "model": "XGBoost",
         "version": "2.0.0"
     }
+import os
+import joblib
+
+model_path = os.path.join(os.path.dirname(__file__), "xgboost_model.pkl")
+scaler_path = os.path.join(os.path.dirname(__file__), "scaler.pkl")
+
+model = joblib.load(model_path)
+scaler = joblib.load(scaler_path)
 
 import os
 import uvicorn

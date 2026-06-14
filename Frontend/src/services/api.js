@@ -1,9 +1,12 @@
 import axios from "axios";
 
+// Use environment variable, fallback to your live Render backend
+const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || "https://stock-prediction-api-zkls.onrender.com";
+
 export const predictStock = async (data) => {
   try {
     const response = await axios.post(
-      "https://stock-market-project-3.onrender.com/predict",
+      `${API_BASE_URL}/predict`,
       data
     );
 

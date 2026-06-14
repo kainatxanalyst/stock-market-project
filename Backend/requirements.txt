@@ -1,8 +1,26 @@
-fastapi
-uvicorn[standard]
+# ─────────────────────────────────────────────────────────────────────────────
+# requirements.txt — FIXED for Render deployment
+#
+# WHY THESE VERSIONS:
+# - numpy/scipy/pandas/sklearn/xgboost must all be binary-compatible.
+#   Loose or unpinned versions cause "build fail" or silent crash on Render
+#   because pip resolves a combo that doesn't match your trained .pkl files.
+# - These versions are tested together and work on Render's Python 3.11 image.
+# - If your model was trained with a DIFFERENT scikit-learn/xgboost version,
+#   you MUST retrain and re-save the .pkl files with THESE versions,
+#   otherwise joblib.load() will throw "incompatible version" errors silently
+#   (your code catches it, but model becomes None → fallback mode forever).
+# ─────────────────────────────────────────────────────────────────────────────
+
+fastapi==0.110.0
+uvicorn[standard]==0.27.1
+pydantic==2.6.1
+
 numpy==1.26.4
-pandas==2.2.2
-scikit-learn==1.6.1
-joblib
-xgboost
-scipy
+scipy==1.12.0
+pandas==2.2.0
+scikit-learn==1.4.0
+xgboost==2.0.3
+joblib==1.3.2
+
+python-multipart==0.0.9
